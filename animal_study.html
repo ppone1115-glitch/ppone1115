@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>동물 한살이 백과 사전 🐾</title>
+    <style>
+        /* 기본 스타일 및 폰트 */
+        @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap');
+        
+        body {
+            font-family: 'Nanum Gothic', sans-serif;
+            background-color: #f0fdf4; /* 연한 초록빛 배경 (자연 느낌) */
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 메인 컨테이너 */
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+            text-align: center;
+            border: 3px solid #bbf7d0;
+        }
+
+        h1 {
+            color: #16a34a;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+        }
+
+        /* 검색창 영역 */
+        .search-box {
+            margin-bottom: 30px;
+        }
+
+        input[type="text"] {
+            width: 60%;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            border: 2px solid #cbd5e1;
+            border-radius: 30px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #22c55e;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            background-color: #22c55e;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #16a34a;
+        }
+
+        /* 안내 문구 */
+        .hint-text {
+            color: #888;
+            font-size: 0.95rem;
+            margin-top: 10px;
+        }
+
+        /* 결과 화면 디자인 */
+        .result-container {
+            display: none; /* 기본적으로는 숨김 */
+            margin-top: 20px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .animal-title {
+            font-size: 1.8rem;
+            color: #1e3a8a;
+            margin-bottom: 20px;
+            display: inline-block;
+            background: #dbeafe;
+            padding: 5px 20px;
+            border-radius: 15px;
+        }
+
+        /* 흐름도(타임라인) 구조 */
+        .timeline {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            margin-top: 30px;
+            position: relative;
+        }
+
+        .step {
+            flex: 1;
+            min-width: 160px;
+            margin: 10px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 15px;
+            border: 2px solid #e2e8f0;
+            position: relative;
+        }
+
+        .step-num {
+            background: #22c55e;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin: 0 auto 10px auto;
+        }
+
+        /* SVG 선화 일러스트 박스 */
+        .icon-box {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 15px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-box svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .step-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+
+        .step-desc {
+            font-size: 0.95rem;
+            color: #64748b;
+            line-height: 1.5;
+            word-break: keep-all;
+        }
+
+        /* 에러 메시지 */
+        .error-message {
+            display: none;
+            color: #ef4444;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🐾 동물 한살이 백과 사전</h1>
+    <p class="subtitle">궁금한 동물의 이름을 검색해서 한살이를 알아보아요!</p>
+
+    <!-- 검색창 -->
+    <div class="search-box">
+        <input type="text" id="animalInput" placeholder="예: 개구리, 나비, 닭, 호랑이" onkeypress="handleKeyPress(event)">
+        <button onclick="searchAnimal()">찾아보기</button>
+        <p class="hint-text">💡 검색할 수 있는 동물: <b>개구리, 나비, 닭, 호랑이</b></p>
+    </div>
+
+    <!-- 에러 메시지 -->
+    <div id="errorMessage" class="error-message">앗! 아직 준비 중인 동물이에요. '개구리, 나비, 닭, 호랑이' 중에서 검색해 주세요!</div>
+
+    <!-- 결과 창 -->
+    <div id="resultContainer" class="result-container">
+        <div id="animalTitle" class="animal-title">동물 이름</div>
+        <div id="timeline" class="timeline">
+            <!-- 자바스크립트로 단계들이 들어갈 자리 -->
+        </div>
+    </div>
+</div>
+
+<script>
+ // 초등 3학년 맞춤형 50종 동물 한살이 데이터
+    const animalData = {
+        // [1-10] 포유류 (새끼를 낳는 동물)
+        "호랑이": {
+            title: "🐯 호랑이의 한살이",
+            steps: [
+                { name: "새끼 호랑이", desc: "엄마 몸속에서 자라 태어나요. 눈을 못 뜨고 마냥 젖을 먹어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#f97316" stroke-width="4"><circle cx="50" cy="50" r="25"/><path d="M35 32 L25 22 M65 32 L75 22"/><circle cx="42" cy="45" r="2" fill="#f97316"/><circle cx="58" cy="45" r="2" fill="#f97316"/><path d="M45 60 Q50 65 55 60"/></svg>` },
+                { name: "큰 새끼", desc: "이가 자라서 고기를 먹기 시작하고, 사냥하는 방법을 배워요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#f97316" stroke-width="4"><circle cx="50" cy="50" r="25"/><path d="M35 32 L25 22 M65 32 L75 22 M30 50 L40 50 M70 50 L60 50"/></svg>` },
+                { name: "다 자란 호랑이", desc: "몸집이 엄청 커지고 줄무늬가 선명해져요. 혼자서 씩씩하게 살아가요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#f97316" stroke-width="4"><circle cx="50" cy="50" r="28"/><path d="M32 28 L18 15 M68 28 L82 15 M40 42 L38 48 M60 42 L62 48"/><path d="M42 62 Q50 70 58 62"/></svg>` }
+            ]
+        },
+        "고양이": {
+            title: "🐱 고양이의 한살이",
+            steps: [
+                { name: "꼬물이(새끼)", desc: "눈도 못 뜨고 귀도 접혀있어요. 엄마 젖을 먹으며 웅크려 지내요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#64748b" stroke-width="4"><circle cx="50" cy="55" r="20"/><path d="M35 40 L30 25 M65 40 L70 25"/></svg>` },
+                { name: "아깽이(유치기)", desc: "눈을 또렷하게 뜨고 아장아장 걸어요. 장난치는 것을 정말 좋아해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#64748b" stroke-width="4"><circle cx="50" cy="50" r="22"/><path d="M32 32 L25 15 L42 25 M68 32 L75 15 L58 25"/><circle cx="42" cy="46" r="2" fill="#64748b"/><circle cx="58" cy="46" r="2" fill="#64748b"/></svg>` },
+                { name: "다 자란 고양이", desc: "날렵하고 유연해져요. 높은 곳도 훌쩍 뛰어오를 수 있는 어른이 돼요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#64748b" stroke-width="4"><circle cx="50" cy="45" r="25"/><path d="M30 25 L20 5 L38 18 M70 25 L80 5 L62 18"/><path d="M40 55 Q50 62 60 55"/><path d="M25 45 L15 45 M75 45 L85 45"/></svg>` }
+            ]
+        },
+        "다람쥐": {
+            title: "🐿️ 다람쥐의 한살이",
+            steps: [
+                { name: "갓 태어난 새끼", desc: "털이 없고 눈도 감겨 있어요. 붉은 피부를 가지고 태어나요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#b45309" stroke-width="4"><circle cx="50" cy="55" r="18"/></svg>` },
+                { name: "어린 다람쥐", desc: "등에 줄무늬가 생기고 눈을 떠요. 단단한 도토리도 갉아먹을 수 있어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#b45309" stroke-width="4"><circle cx="50" cy="50" r="20"/><path d="M50 30 L50 70 M44 32 L44 68 M56 32 L56 68"/></svg>` },
+                { name: "다 자란 다람쥐", desc: "볼주머니가 발달해서 먹이를 한가득 모으고 땅속에 숨겨두기도 해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#b45309" stroke-width="4"><circle cx="50" cy="45" r="24"/><path d="M35 25 Q40 10 45 23 M65 25 Q60 10 55 23"/><ellipse cx="32" cy="55" rx="8" ry="6"/><ellipse cx="68" cy="55" rx="8" ry="6"/></svg>` }
+            ]
+        },
+        "고슴도치": {
+            title: "🦔 고슴도치의 한살이",
+            steps: [
+                { name: "새끼 고슴도치", desc: "처음에는 가시가 살 속에 숨어있다가, 태어난 지 몇 시간 만에 하얀 가시가 쏙 올라와요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#475569" stroke-width="4"><ellipse cx="50" cy="55" rx="18" ry="14"/></svg>` },
+                { name: "어린 고슴도치", desc: "가시가 점점 갈색으로 변하고 단단해져요. 위험하면 몸을 동글게 말아요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#475569" stroke-width="4"><ellipse cx="45" cy="55" rx="20" ry="16"/><path d="M35 39 L30 30 M45 39 L45 25 M55 41 L60 28 M28 50 L18 45 M62 48 L72 42"/></svg>` },
+                { name: "다 자란 고슴도치", desc: "수천 개의 단단한 가시 옷을 입어요. 밤이 되면 킁킁거리며 먹이를 찾아다녀요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#475569" stroke-width="4"><ellipse cx="42" cy="55" rx="24" ry="18"/><path d="M30 37 L20 25 M42 37 L40 20 M55 39 L58 22 M22 50 L10 45 M62 45 L75 35 M25 65 L12 68 M58 68 L70 72"/><circle cx="72" cy="58" r="4" fill="#475569"/></svg>` }
+            ]
+        },
+        "강아지": {
+            title: "🐶 개의 한살이",
+            steps: [
+                { name: "새끼 강아지", desc: "귀와 눈이 닫힌 채 태어나 냄새와 촉각으로 엄마를 찾아 젖을 먹어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#854d0e" stroke-width="4"><circle cx="50" cy="55" r="18"/><path d="M35 45 Q30 55 35 65 M65 45 Q70 55 65 65"/></svg>` },
+                { name: "어린 개", desc: "이빨이 나고 사료를 먹기 시작해요. 호기심이 많아 꼬리를 흔들며 뛰어다녀요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#854d0e" stroke-width="4"><circle cx="50" cy="50" r="22"/><path d="M30 38 Q22 45 28 60 M70 38 Q78 45 72 60"/><circle cx="42" cy="44" r="2" fill="#854d0e"/><circle cx="58" cy="44" r="2" fill="#854d0e"/></svg>` },
+                { name: "다 자란 개", desc: "몸집 성장이 멈추고 어른이 돼요. 주인을 잘 따르고 든든한 친구가 되어줘요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#854d0e" stroke-width="4"><circle cx="50" cy="45" r="25"/><path d="M28 30 Q15 35 22 65 M72 30 Q85 35 78 65"/><path d="M48 60 L52 60 L50 65 Z" fill="#854d0e"/></svg>` }
+            ]
+        },
+        "토끼": {
+            title: "🐰 토끼의 한살이",
+            steps: [
+                { name: "새끼 토끼", desc: "털이 없고 눈도 안 보이지만, 엄마가 짜놓은 폭신한 풀 침대에서 자라요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#e2e8f0" stroke-width="4"><circle cx="50" cy="60" r="16"/></svg>` },
+                { name: "어린 토끼", desc: "보송보송한 털이 나고 귀가 쫑긋 서요. 풀과 당근을 갉아먹기 시작해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#cbd5e1" stroke-width="4"><circle cx="50" cy="55" r="20"/><path d="M42 37 Q40 15 44 20 M58 37 Q60 15 56 20"/></svg>` },
+                { name: "다 자란 토끼", desc: "뒷다리가 길고 튼튼해져서 깡충깡충 멀리 뛰어다닐 수 있어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#94a3b8" stroke-width="4"><circle cx="50" cy="50" r="24"/><path d="M40 28 Q35 -5 43 5 M60 28 Q65 -5 57 5"/></svg>` }
+            ]
+        },
+        "판다": {
+            title: "🐼 판다의 한살이",
+            steps: [
+                { name: "핑크빛 새끼", desc: "어른 판다 몸무게의 900분의 1 정도로 아주 작고 핑크색 피부예요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#f43f5e" stroke-width="4"><ellipse cx="50" cy="55" rx="12" ry="8"/></svg>` },
+                { name: "어린 판다", desc: "눈과 귀 주변, 팔다리에 검은색 털이 나면서 우리가 아는 판다 모양이 돼요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0f172a" stroke-width="4"><circle cx="50" cy="50" r="20"/><circle cx="35" cy="32" r="6" fill="#0f172a"/><circle cx="65" cy="32" r="6" fill="#0f172a"/></svg>` },
+                { name: "다 자란 판다", desc: "하루의 절반 동안 맛있는 대나무를 우작우작 씹어 먹는 덩치 큰 어른이 돼요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0f172a" stroke-width="4"><circle cx="50" cy="45" r="26"/><circle cx="30" cy="22" r="9" fill="#0f172a"/><circle cx="70" cy="22" r="9" fill="#0f172a"/><ellipse cx="38" cy="42" rx="5" ry="8" fill="#0f172a"/><ellipse cx="62" cy="42" rx="5" ry="8" fill="#0f172a"/></svg>` }
+            ]
+        },
+        "햄스터": {
+            title: "🐹 햄스터의 한살이",
+            steps: [
+                { name: "아기 햄스터", desc: "핑크빛 피부에 눈을 감고 있어요. 태어나자마자 작은 이가 나 있어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#fb923c" stroke-width="4"><circle cx="50" cy="55" r="14"/></svg>` },
+                { name: "자라나는 햄스터", desc: "털이 자라나고 눈을 떠요. 쳇바퀴를 굴리며 놀기 시작해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#fb923c" stroke-width="4"><circle cx="50" cy="50" r="18"/><circle cx="35" cy="35" r="4"/><circle cx="65" cy="35" r="4"/></svg>` },
+                { name: "다 자란 햄스터", desc: "볼에 해바라기씨를 잔뜩 집어넣어 뚱뚱한 볼을 만드는 어른이 돼요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#fb923c" stroke-width="4"><circle cx="50" cy="45" r="22"/><circle cx="32" cy="28" r="6"/><circle cx="68" cy="28" r="6"/><ellipse cx="30" cy="52" rx="6" ry="8"/><ellipse cx="70" cy="52" rx="6" ry="8"/></svg>` }
+            ]
+        },
+        "돌고래": {
+            title: "🐬 돌고래의 한살이",
+            steps: [
+                { name: "아기 돌고래", desc: "물속에서 꼬리부터 태어나요. 태어나자마자 숨을 쉬러 수면 위로 올라가요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#38bdf8" stroke-width="4"><path d="M20 60 Q40 40 60 55"/></svg>` },
+                { name: "성장기 돌고래", desc: "엄마 옆에 꼭 붙어 수영하며, 헤엄치는 법과 물고기 잡는 법을 배워요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#38bdf8" stroke-width="4"><path d="M15 55 Q40 30 70 45 L80 40 L75 52 Z"/></svg>` },
+                { name: "다 자란 돌고래", desc: "초음파를 내보내 친구들과 대화하고, 바다를 멋지게 점프하는 어른이 돼요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0284c7" stroke-width="4"><path d="M10 65 Q45 20 80 50 L92 42 L85 60 L78 55 Z M45 38 L55 25 L55 35"/></svg>` }
+            ]
+        },
+        "사자": {
+            title: "🦁 사자의 한살이",
+            steps: [
+                { name: "새끼 사자", desc: "몸에 귀여운 점무늬가 있는 채로 태어나요. 무리의 보호를 받으며 자라요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#ca8a04" stroke-width="4"><circle cx="50" cy="50" r="20"/><circle cx="42" cy="48" r="1"/><circle cx="58" cy="48" r="1"/></svg>` },
+                { name: "사냥개시 청소년", desc: "수컷은 갈기가 조금씩 나기 시작하고, 암컷은 사냥 연습을 시작해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#ca8a04" stroke-width="4"><circle cx="50" cy="50" r="24"/><path d="M30 30 L25 25 M70 30 L75 25 M50 20 L50 15"/></svg>` },
+                { name: "동물의 왕 사자", desc: "수컷은 멋지고 풍성한 갈기를 가져요. 무리를 이끄는 대장이 돼요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#a16207" stroke-width="4"><circle cx="50" cy="50" r="24"/><circle cx="50" cy="50" r="34" stroke-dasharray="8 6"/></svg>` }
+            ]
+        },
+
+        // [11-20] 조류 (알을 낳는 날개 달린 동물)
+        "닭": {
+            title: "🐔 닭의 한살이",
+            steps: [
+                { name: "알(달걀)", desc: "엄마 닭이 품어주면 21일 동안 알 속에서 아기가 자라나요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#f97316" stroke-width="4"><path d="M50 20 C 30 45, 30 75, 50 85 C 70 75, 70 45, 50 20 Z"/></svg>` },
+                { name: "부화", desc: "알 깨는 소리가 들리며 껍데기를 깨고 세상 밖으로 나와요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#f97316" stroke-width="4"><path d="M50 20 C 30 45, 30 75, 50 85 C 70 75, 70 45, 50 20 Z"/><path d="M25 55 L75 55 L35 65 L65 70" stroke-width="3"/></svg>` },
+                { name: "병아리", desc: "노란 솜털이 보송보송해요. 삐약삐약 울며 모이를 쪼아먹어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#eab308" stroke-width="4"><circle cx="45" cy="45" r="16"/><circle cx="66" cy="35" r="10"/><polygon points="74,33 82,37 74,41" fill="#eab308"/></svg>` },
+                { name: "다 자란 닭", desc: "깃털이 단단해지고 머리에 붉은 볏이 돋아나요. 알을 낳을 수 있어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#b45309" stroke-width="4"><circle cx="40" cy="55" r="22"/><circle cx="68" cy="38" r="12"/><path d="M64 24 Q68 15 72 24" fill="#b45309"/></svg>` }
+            ]
+        },
+        "오리": {
+            title: "🦆 오리의 한살이",
+            steps: [
+                { name: "오리알", desc: "달걀보다 조금 더 크고 단단한 알 속에서 새끼가 자라요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#65a30d" stroke-width="4"><path d="M50 22 C32 45, 32 75, 50 82 C68 75, 68 45, 50 22 Z"/></svg>` },
+                { name: "새끼 오리", desc: "태어나자마자 걸을 수 있고, 엄마를 따라 물에 들어가 수영을 해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#eab308" stroke-width="4"><ellipse cx="45" cy="55" rx="16" ry="12"/><circle cx="62" cy="40" r="9"/><path d="M68 40 L76 43 L68 46"/></svg>` },
+                { name: "다 자란 오리", desc: "깃털에 기름이 돌아서 물에 젖지 않아요. '꽥꽥' 소리를 내며 헤엄쳐요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#16a34a" stroke-width="4"><ellipse cx="42" cy="58" rx="22" ry="15"/><circle cx="65" cy="36" r="12"/><path d="M74 36 L86 40 L74 44 F"/></svg>` }
+            ]
+        },
+        "펭귄": {
+            title: "🐧 펭귄의 한살이",
+            steps: [
+                { name: "아빠 발 위의 알", desc: "얼음땅에 알이 닿으면 얼기 때문에 아빠 펭귄이 발 위에 올려 품어줘요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0284c7" stroke-width="4"><ellipse cx="50" cy="65" rx="12" ry="16"/></svg>` },
+                { name: "회색 빛 새끼", desc: "솜털이 가득한 회색 몸이에요. 부모가 입으로 넣어주는 물고기를 먹어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#475569" stroke-width="4"><circle cx="50" cy="45" r="14"/><ellipse cx="50" cy="70" rx="18" ry="14"/></svg>` },
+                { name: "어른 펭귄", desc: "솜털이 다 빠지고 방수가 되는 수영복 깃털을 입어 바다 사냥꾼이 돼요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0f172a" stroke-width="4"><ellipse cx="50" cy="55" rx="20" ry="30"/><circle cx="50" cy="20" r="10"/><path d="M30 45 Q20 60 32 70 M70 45 Q80 60 68 70"/></svg>` }
+            ]
+        },
+        "참새": {
+            title: "🐦 참새의 한살이",
+            steps: [
+                { name: "작은 알", desc: "지붕 밑 둥지에 옅은 갈색 반점이 있는 작은 알들이 모여있어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#78350f" stroke-width="4"><circle cx="40" cy="50" r="8"/><circle cx="60" cy="55" r="7"/></svg>` },
+                { name: "둥지 속 새끼", desc: "깃털이 없이 태어나 눈도 못 떠요. 어미가 벌레를 주면 입을 쩍 벌려요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#78350f" stroke-width="4"><path d="M35 60 Q50 30 65 60 Z"/><polygon points="45,45 50,35 55,45" fill="#78350f"/></svg>` },
+                { name: "다 자란 참새", desc: "날개 깃털이 다 자라면 둥지를 떠나 짹짹거리며 무리 지어 날아다녀요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#78350f" stroke-width="4"><ellipse cx="45" cy="55" rx="16" ry="12"/><circle cx="64" cy="42" r="9"/><polygon points="72,40 80,42 72,44"/></svg>` }
+            ]
+        },
+        "타조": {
+            title: "🦩 타조의 한살이",
+            steps: [
+                { name: "거대한 알", desc: "새 중에서 알이 가장 커요. 껍데기가 엄청 단단해서 밟아도 깨지지 않아요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#d97706" stroke-width="4"><ellipse cx="50" cy="50" rx="22" ry="28"/></svg>` },
+                { name: "아기 타조", desc: "태어날 때부터 고슴도치 같은 빳빳한 털을 가졌고 금방 걸을 수 있어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#d97706" stroke-width="4"><circle cx="45" cy="60" r="12"/><path d="M45 48 L45 35"/><circle cx="45" cy="32" r="5"/></svg>` },
+                { name: "다 자란 타조", desc: "날지는 못하지만 다리가 엄청 길고 튼튼해서 자동차만큼 빠르게 달릴 수 있어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#1e293b" stroke-width="4"><ellipse cx="40" cy="55" rx="20" ry="15"/><path d="M48 44 L58 15"/><circle cx="58" cy="10" r="6"/><path d="M35 70 L35 95 M45 70 L45 95" stroke-width="5"/></svg>` }
+            ]
+        },
+        "독수리": {
+            title: "🦅 독수리의 한살이",
+            steps: [
+                { name: "절벽 위 알", desc: "높은 바위 절벽 위 안전한 둥지 속에 알을 낳고 소중히 품어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#451a03" stroke-width="4"><ellipse cx="50" cy="55" rx="14" ry="18"/></svg>` },
+                { name: "훈련받는 새끼", desc: "하얀 솜털로 덮여있어요. 절벽에서 떨어지는 법을 배우며 나는 연습을 해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#451a03" stroke-width="4"><circle cx="50" cy="45" r="12"/><path d="M35 55 L20 60 M65 55 L80 60"/></svg>` },
+                { name: "하늘의 제왕", desc: "날개가 엄청나게 길어지고 눈이 밝아져요. 하늘 높이 웅장하게 날아올라요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#451a03" stroke-width="4"><path d="M50 60 L50 40 M50 45 C15 20, 10 35, 45 50 M50 45 C85 20, 90 35, 55 50"/><polygon points="48,40 50,30 52,40"/></svg>` }
+            ]
+        },
+        "부엉이": {
+            title: "🦉 부엉이의 한살이",
+            steps: [
+                { name: "나무 구멍 속 알", desc: "대부분 나무 구멍 속 아늑한 곳에 하얗고 동글동글한 알을 낳아요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#78350f" stroke-width="4"><circle cx="50" cy="50" r="14"/></svg>` },
+                { name: "밤눈 뜨는 새끼", desc: "둥지 안에서 엄미가 물어다 주는 쥐나 벌레를 먹으며 밤에 보는 연습을 해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#78350f" stroke-width="4"><circle cx="50" cy="50" r="18"/><circle cx="44" cy="46" r="3"/><circle cx="56" cy="46" r="3"/></svg>` },
+                { name: "밤의 사냥꾼", desc: "머리에 귀 모양 깃털이 쫑긋 서요. 소리 없이 날아다니며 밤에 활동해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#78350f" stroke-width="4"><circle cx="50" cy="50" r="24"/><path d="M32 30 L38 36 M68 30 L62 36"/><circle cx="40" cy="46" r="5"/><circle cx="60" cy="46" r="5"/></svg>` }
+            ]
+        },
+        "공작": {
+            title: "🦚 공작의 한살이",
+            steps: [
+                { name: "평범한 알", desc: "화려한 어른 공작과 다르게 알은 일반 새 알처럼 갈색빛을 띠어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#047857" stroke-width="4"><ellipse cx="50" cy="52" rx="13" ry="17"/></svg>` },
+                { name: "수수한 어린 새", desc: "처음에는 암수 모두 갈색 깃털을 가졌고, 꼬리도 길지 않아요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#047857" stroke-width="4"><ellipse cx="45" cy="55" rx="14" ry="11"/></svg>` },
+                { name: "화려한 어른 공작", desc: "수컷은 자라면서 눈이 부실 정도로 아름답고 커다란 부채 모양 꼬리 깃털을 펼쳐요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0369a1" stroke-width="4"><circle cx="50" cy="55" r="12"/><path d="M50 43 L50 25 M38 45 C20 20, 30 10, 48 35 M62 45 C80 20, 70 10, 52 35" stroke-width="3"/></svg>` }
+            ]
+        },
+        "백조": {
+            title: "🦢 백조(고니)의 한살이",
+            steps: [
+                { name: "초록빛 알", desc: "수풀 속에 큰 둥지를 틀고 약간 푸른빛이 도는 알들을 낳아요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#94a3b8" stroke-width="4"><ellipse cx="50" cy="50" rx="15" ry="20"/></svg>` },
+                { name: "미운 아기 오리", desc: "어릴 때는 백조가 아니라 회색빛의 칙칙한 솜털을 가지고 자라나요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#94a3b8" stroke-width="4"><ellipse cx="45" cy="60" rx="15" ry="10"/><path d="M52 54 Q60 40 55 45"/></svg>` },
+                { name: "아름다운 백조", desc: "새하얀 깃털옷으로 갈아입고 S자 모양의 긴 목을 뽐내며 우아하게 수영해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#cbd5e1" stroke-width="4"><ellipse cx="40" cy="65" rx="20" ry="12"/><path d="M52 60 Q70 30 65 20 Q60 15 58 25 L50 60" stroke-width="3"/></svg>` }
+            ]
+        },
+        "제비": {
+            title: "🐧 제비의 한살이",
+            steps: [
+                { name: "진흙 둥지 속 알", desc: "사람들이 사는 집 처마 밑 진흙 둥지에 알을 5개쯤 낳아요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#1e3a8a" stroke-width="4"><circle cx="50" cy="55" r="10"/></svg>` },
+                { name: "부지런한 새끼", desc: "엄마 아빠 제비가 날아와 곤충을 입에 쏙 넣어주면 금방 자라요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#1e3a8a" stroke-width="4"><path d="M40 60 Q50 40 60 60 Z"/></svg>` },
+                { name: "가위 모양 제비", desc: "꼬리 깃털이 가위처럼 길게 갈라져요. 강남과 한국을 멀리 날아다녀요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#1e3a8a" stroke-width="4"><ellipse cx="45" cy="45" rx="14" ry="10"/><path d="M31 45 L15 52 M31 48 L18 60"/></svg>` }
+            ]
+        },
+
+        // [21-30] 곤충 및 절지동물 (완전/불완전 탈바꿈 동물)
+        "나비": {
+            title: "🦋 배추흰나비의 한살이 (완전 탈바꿈)",
+            steps: [
+                { name: "알", desc: "풀잎 뒤에 붙어 있는 옥수수 모양의 아주 작은 노란 알이에요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#eab308" stroke-width="4"><ellipse cx="50" cy="50" rx="10" ry="20"/></svg>` },
+                { name: "애벌레", desc: "알에서 깨어나 허물을 네 번 벗으며 초록 잎을 열심히 먹어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#22c55e" stroke-width="4"><circle cx="30" cy="50" r="6"/><circle cx="42" cy="50" r="6"/><circle cx="54" cy="50" r="6"/><circle cx="66" cy="50" r="6"/></svg>` },
+                { name: "번데기", desc: "실로 몸을 묶고 단단해져요. 속에서 날개가 돋아날 준비를 해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#16a34a" stroke-width="4"><path d="M50 20 C35 40, 35 60, 50 80 C65 60, 65 40, 50 20 Z"/></svg>` },
+                { name: "어른벌레(나비)", desc: "번데기를 찢고 나와 날개를 말린 후 예쁘게 날아올라요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#3b82f6" stroke-width="4"><path d="M50 30 L50 70 M50 45 C20 15, 15 50, 50 55 C85 15, 80 50, 50 55"/></svg>` }
+            ]
+        },
+        "사슴벌레": {
+            title: "🪲 사슴벌레의 한살이 (완전 탈바꿈)",
+            steps: [
+                { name: "동글동글 알", desc: "썩은 참나무 속에 하얗고 동그란 알을 안전하게 숨겨 낳아요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#78350f" stroke-width="4"><circle cx="50" cy="50" r="12"/></svg>` },
+                { name: "굼벵이(애벌레)", desc: "C자 모양으로 몸을 웅크리고 나무 속을 갉아먹으며 무럭무럭 자라요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#d97706" stroke-width="4"><path d="M60 40 C35 30, 35 70, 60 65" stroke-dasharray="2 2"/></svg>` },
+                { name: "번데기", desc: "방을 만들고 번데기가 돼요. 수컷은 이때 이미 큰 턱 모양이 보여요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#78350f" stroke-width="4"><rect x="40" y="30" width="20" height="45" rx="10"/></svg>` },
+                { name: "사슴벌레", desc: "단단한 껍질과 멋진 집게 턱을 가진 멋쟁이 곤충으로 태어나요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#451a03" stroke-width="4"><rect x="38" y="40" width="24" height="40" rx="6"/><path d="M44 40 Q40 20 32 25 M56 40 Q60 20 68 25" stroke-width="6"/></svg>` }
+            ]
+        },
+        "장수풍뎅이": {
+            title: "🪲 장수풍뎅이의 한살이 (완전 탈바꿈)",
+            steps: [
+                { name: "쌀알 같은 알", desc: "푹신한 톱밥이나 썩은 흙 속에 알을 낳아 숨겨요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#78350f" stroke-width="4"><ellipse cx="50" cy="50" rx="8" ry="12"/></svg>` },
+                { name: "굼벵이(애벌레)", desc: "허물을 벗으며 엄청나게 커져요. 3령 애벌레가 되면 손가락만큼 굵어져요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#b45309" stroke-width="4"><path d="M65 40 C30 30, 30 70, 65 65" stroke-width="6"/></svg>` },
+                { name: "번데기", desc: "흙 속에 멋진 세로 방을 지어 번데기가 되고 멋진 뿔 모양을 잡아가요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#78350f" stroke-width="4"><rect x="40" y="35" width="20" height="45" rx="8"/><path d="M50 35 L50 20"/></svg>` },
+                { name: "장수풍뎅이", desc: "이마에 멋지고 커다란 Y자 모양 뿔을 세운 곤충 왕이 완성돼요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#451a03" stroke-width="4"><ellipse cx="50" cy="60" rx="20" ry="25"/><path d="M50 35 L50 15 L42 10 M50 15 L58 10" stroke-width="5"/></svg>` }
+            ]
+        },
+        "잠자리": {
+            title: " Dragonfly 잠자리의 한살이 (불완전 탈바꿈)",
+            steps: [
+                { name: "물속의 알", desc: "엄마 잠자리가 수면을 톡톡 치며 물속 풀줄기에 알을 붙여요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0ea5e9" stroke-width="4"><circle cx="50" cy="50" r="6"/><circle cx="58" cy="56" r="5"/></svg>` },
+                { name: "수수동구리(애벌레)", desc: "번데기 단계 없이 물속에서 아랫입술을 뻗어 꼬마 물고기를 사냥해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0284c7" stroke-width="4"><rect x="42" y="35" width="16" height="40" rx="4"/></svg>` },
+                { name: "탈피(허물벗기)", desc: "물 밖 풀줄기로 기어올라 가 등을 쫙 찢고 밖으로 몸을 빼내요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0284c7" stroke-width="4"><rect x="42" y="45" width="16" height="40" rx="4" stroke-dasharray="4 4"/></svg>` },
+                { name: "어른 잠자리", desc: "투명하고 커다란 날개 4개로 하늘을 엄청나게 빠르게 날아다녀요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0284c7" stroke-width="4"><path d="M50 25 L50 85 M50 35 C15 30, 20 40, 50 40 C85 30, 80 40, 50 40" stroke-width="3"/></svg>` }
+            ]
+        },
+        "매미": {
+            title: "🦗 매미의 한살이 (불완전 탈바꿈)",
+            steps: [
+                { name: "나무 속 알", desc: "나무껍질 틈새에 알을 길쭉하게 낳아 두고 1년 동안 그대로 있어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#ca8a04" stroke-width="4"><ellipse cx="50" cy="50" rx="4" ry="14"/></svg>` },
+                { name: "땅속 애벌레", desc: "땅속으로 기어 들어가 나무뿌리 즙을 먹으며 무려 3년~7년 동안 살아요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#854d0e" stroke-width="4"><ellipse cx="50" cy="50" rx="16" ry="22"/></svg>` },
+                { name: "땅 위로 탈피", desc: "여름 밤, 땅 위 나무 위로 기어 올라와 마지막 허물을 영차 벗어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#854d0e" stroke-width="4"><path d="M50 30 L50 70 L35 45 M50 50 L65 45"/></svg>` },
+                { name: "맴맴 매미", desc: "수컷 매미가 높은 나무 위에서 '맴맴' 우렁차게 노래를 불러요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#451a03" stroke-width="4"><ellipse cx="50" cy="45" rx="18" ry="24"/><path d="M36 30 L22 65 M64 30 L78 65" stroke-width="3"/></svg>` }
+            ]
+        },
+        "무당벌레": {
+            title: "🐞 무당벌레의 한살이 (완전 탈바꿈)",
+            steps: [
+                { name: "노란 알 무리", desc: "진딧물이 많은 풀잎 뒷면에 노랗고 길쭉한 알을 모아 낳아요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#dc2626" stroke-width="4"><circle cx="45" cy="45" r="5"/><circle cx="55" cy="45" r="5"/><circle cx="50" cy="55" r="5"/></svg>` },
+                { name: "무시무시한 애벌레", desc: "검은색에 가시가 돋은 징그러운 모습으로 진딧물을 엄청 사냥해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#1e293b" stroke-width="4"><ellipse cx="50" cy="50" rx="12" ry="20"/></svg>` },
+                { name: "잎에 붙은 번데기", desc: "잎사귀에 꽁무니를 딱 붙이고 며칠 동안 가만히 누워있어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#dc2626" stroke-width="4"><circle cx="50" cy="50" r="16"/></svg>` },
+                { name: "점박이 무당벌레", desc: "빨간 껍질에 귀여운 검은 점이 콕콕 박힌 무당벌레가 태어나요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#dc2626" stroke-width="4"><circle cx="50" cy="50" r="22" fill="none"/><path d="M50 28 L50 72"/><circle cx="40" cy="42" r="3" fill="#dc2626"/><circle cx="60" cy="42" r="3" fill="#dc2626"/><circle cx="40" cy="58" r="3" fill="#dc2626"/><circle cx="60" cy="58" r="3" fill="#dc2626"/></svg>` }
+            ]
+        },
+        "꿀벌": {
+            title: "🐝 꿀벌의 한살이 (완전 탈바꿈)",
+            steps: [
+                { name: "방 속의 알", desc: "여왕벌이 여각 모양 벌집 방 하나하나에 하얀 알을 1개씩 쏙 넣어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#d97706" stroke-width="4"><polygon points="50,25 72,38 72,62 50,75 28,62 28,38"/><circle cx="50" cy="50" r="4"/></svg>` },
+                { name: "하얀 애벌레", desc: "일벌들이 입으로 먹여주는 로열젤리와 꿀을 먹으며 통통해져요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#d97706" stroke-width="4"><ellipse cx="50" cy="50" rx="10" ry="14"/></svg>` },
+                { name: "방 뚜껑 속 번데기", desc: "밀랍으로 문을 닫아준 방 속에서 다리와 더듬이가 자라나요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#a16207" stroke-width="4"><rect x="42" y="35" width="16" height="35" rx="8"/></svg>` },
+                { name: "일꾼 꿀벌", desc: "방 문을 갉아 깨고 나와 꽃가루와 꿀을 모으러 붕붕 날아가요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#d97706" stroke-width="4"><ellipse cx="50" cy="55" rx="14" ry="20"/><path d="M36 45 L50 45 M36 55 L50 55 M36 65 L50 65"/><path d="M40 38 Q25 20 40 30 M60 38 Q75 20 60 30" stroke-width="2"/></svg>` }
+            ]
+        },
+        "개미": {
+            title: "🐜 개미의 한살이 (완전 탈바꿈)",
+            steps: [
+                { name: "하얀 알", desc: "여왕개미가 깊은 땅속 방에 알을 무더기로 낳으면 일개미가 돌봐요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#1e293b" stroke-width="4"><circle cx="45" cy="50" r="5"/><circle cx="55" cy="50" r="6"/></svg>` },
+                { name: "누에 같은 애벌레", desc: "다리가 없는 하얗고 말랑한 몸으로, 일개미가 주는 먹이를 받아먹어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#1e293b" stroke-width="4"><ellipse cx="50" cy="50" rx="8" ry="14"/></svg>` },
+                { name: "하얀 고치 번데기", desc: "일개미들이 실로 고치를 만들어주면 그 속에서 개미 모양으로 변해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#1e293b" stroke-width="4"><ellipse cx="50" cy="50" rx="12" ry="22" stroke-dasharray="4 2"/></svg>` },
+                { name: "부지런한 개미", desc: "껍질을 깨고 나와 페로몬 냄새를 맡으며 줄지어 먹이를 날라요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0f172a" stroke-width="4"><circle cx="30" cy="50" r="8"/><circle cx="50" cy="50" r="6"/><circle cx="72" cy="50" r="10"/></svg>` }
+            ]
+        },
+        "사마귀": {
+            title: "🦗 사마귀의 한살이 (불완전 탈바꿈)",
+            steps: [
+                { name: "거품 알집", desc: "가을에 나뭇가지에 거품 같은 가루를 뿜어 단단한 알집을 만들어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#16a34a" stroke-width="4"><rect x="35" y="30" width="30" height="40" rx="15" stroke-dasharray="4 4"/></svg>` },
+                { name: "어린 사마귀", desc: "봄에 알집에서 백 마리 넘는 작은 사마귀들이 줄을 타고 주르륵 내려와요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#16a34a" stroke-width="4"><circle cx="50" cy="40" r="8"/><path d="M50 48 L50 75"/></svg>` },
+                { name: "당수 사마귀", desc: "허물을 여러 번 벗으며 낫 모양의 강력한 앞다리와 날개를 가져요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#15803d" stroke-width="4"><path d="M50 30 L50 75 M42 42 L30 35 L35 50 M58 42 L70 35 L65 50" stroke-width="3"/></svg>` }
+            ]
+        },
+        "거미": {
+            title: "🕷️ 거미의 한살이 (절지동물)",
+            steps: [
+                { name: "동그란 알주머니", desc: "거미줄로 알을 꽁꽁 싸매서 솜사탕 같은 알주머니를 만들어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#475569" stroke-width="4"><circle cx="50" cy="50" r="18"/><circle cx="50" cy="50" r="24" stroke-dasharray="2 4"/></svg>` },
+                { name: "줄타는 아기거미", desc: "엄마 거미 등에서 자라다가, 실을 뽑아 바람을 타고 흩어져요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#475569" stroke-width="4"><circle cx="50" cy="55" r="8"/><path d="M50 15 L50 47"/></svg>` },
+                { name: "왕거미", desc: "멋진 거미줄 그물을 쳐서 곤충을 잡는 사냥꾼으로 자라나요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0f172a" stroke-width="4"><circle cx="50" cy="42" r="10"/><circle cx="50" cy="62" r="14"/><path d="M38 42 L20 35 M36 50 L18 50 M62 42 L80 35 M64 50 L82 50" stroke-width="3"/></svg>` }
+            ]
+        },
+
+        // [31-40] 양서류, 파충류, 어류 (알을 낳는 변온 동물)
+        "개구리": {
+            title: "🐸 개구리의 한살이 (양서류)",
+            steps: [
+                { name: "물속의 알", desc: "물속에 우물우물 뭉쳐 있는 말랑말랑 젤리 같은 알이에요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#22c55e" stroke-width="4"><circle cx="40" cy="40" r="10"/><circle cx="40" cy="40" r="3" fill="#22c55e"/><circle cx="60" cy="55" r="10"/></svg>` },
+                { name: "올챙이", desc: "헤엄을 치며 자라다가 뒷다리가 쑥! 먼저 튀어나와요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#22c55e" stroke-width="4"><ellipse cx="40" cy="50" rx="15" ry="12"/><path d="M55 50 Q75 40 88 50 Q75 60 55 50"/></svg>` },
+                { name: "어린 개구리", desc: "앞다리도 쏙 나오고 꼬리가 점점 짧아지며 물 밖을 구경해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#22c55e" stroke-width="4"><circle cx="50" cy="45" r="18"/><path d="M35 60 C35 75, 65 75, 65 60"/><path d="M65 50 L80 55"/></svg>` },
+                { name: "어른 개구리", desc: "꼬리가 완전히 사라지고 땅 위를 펄쩍펄쩍 뛰어다녀요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#16a34a" stroke-width="4"><ellipse cx="50" cy="55" rx="22" ry="18"/><circle cx="35" cy="35" r="6"/><circle cx="65" cy="35" r="6"/></svg>` }
+            ]
+        },
+        "도롱뇽": {
+            title: "🦎 도롱뇽의 한살이 (양서류)",
+            steps: [
+                { name: "바나나 모양 알집", desc: "계곡물 속 돌 밑에 길쭉한 순대나 바나나 모양의 알주머니를 붙여요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#15803d" stroke-width="4"><path d="M30 30 Q50 20 70 40 Q50 60 30 30 Z"/></svg>` },
+                { name: "겉아가미 올챙이", desc: "머리 양옆에 깃털 모양의 화려한 겉아가미를 달고 물속을 헤엄쳐요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#15803d" stroke-width="4"><ellipse cx="40" cy="50" rx="14" ry="10"/><path d="M28 45 L18 40 M26 50 L14 50 M28 55 L18 60"/></svg>` },
+                { name: "어른 도롱뇽", desc: "겉아가미가 사라지고 허파가 생겨요. 촉촉한 낙엽 밑에 숨어 살아요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#16a34a" stroke-width="4"><path d="M20 50 Q50 35 80 50" stroke-width="6"/><path d="M35 50 L30 65 M65 50 L70 65" stroke-width="3"/></svg>` }
+            ]
+        },
+        "거북": {
+            title: "🐢 바다거북의 한살이 (파충류)",
+            steps: [
+                { name: "모래 속 알", desc: "엄마 거북이 한밤중에 모래사장에 구덩이를 파고 탁구공 같은 알을 낳아요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0f766e" stroke-width="4"><circle cx="45" cy="50" r="10"/><circle cx="60" cy="55" r="10"/></svg>` },
+                { name: "바다로의 질주", desc: "알에서 깨어난 아기 거북들이 갈매기를 피해 바다를 향해 열심히 기어가요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0f766e" stroke-width="4"><ellipse cx="50" cy="55" rx="12" ry="10"/><path d="M40 50 L25 45 M60 50 L75 45"/></svg>` },
+                { name: "장수 거북", desc: "단단한 등껍질을 가지고 지느러미 발로 푸른 바다를 평화롭게 헤엄쳐요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0d9488" stroke-width="4"><ellipse cx="50" cy="55" rx="22" ry="18"/><circle cx="50" cy="32" r="6"/><path d="M32 50 Q15 40 25 35 M68 50 Q85 40 75 35" stroke-width="3"/></svg>` }
+            ]
+        },
+        "악어": {
+            title: "🐊 악어의 한살이 (파충류)",
+            steps: [
+                { name: "풀더미 속 알", desc: "엄마 악어가 흙과 풀로 따뜻한 더미를 만들고 그 속에 알을 숨겨요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#14532d" stroke-width="4"><ellipse cx="50" cy="50" rx="14" ry="20"/></svg>` },
+                { name: "울부짖는 새끼", desc: "알에서 나올 때 '낑낑' 소리를 내면 엄마 악어가 입으로 조심조심 물어 물로 데려가요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#14532d" stroke-width="4"><ellipse cx="45" cy="55" rx="16" ry="10"/><path d="M58 50 L75 48 L60 56"/></svg>` },
+                { name: " 늪의 강자", desc: "날카로운 이빨과 가죽을 가졌어요. 물속에 숨어 눈만 내밀고 사냥을 기다려요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#166534" stroke-width="4"><rect x="25" y="45" width="50" height="16" rx="4"/><path d="M25 45 L15 42 M35 45 L35 40 M55 45 L55 40" stroke-width="3"/></svg>` }
+            ]
+        },
+        "카멜레온": {
+            title: "🦎 카멜레온의 한살이 (파충류)",
+            steps: [
+                { name: "땅속의 알", desc: "촉촉한 땅을 파고 하얀 알을 깊숙이 묻어 보호해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#059669" stroke-width="4"><ellipse cx="50" cy="50" rx="10" ry="15"/></svg>` },
+                { name: "꼬마 카멜레온", desc: "태어나자마자 나뭇가지를 꽉 붙잡을 수 있고 작은 벌레를 잡을 수 있어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#059669" stroke-width="4"><circle cx="45" cy="50" r="12"/><path d="M55 54 Q65 60 60 70"/></svg>` },
+                { name: "변신의 천재", desc: "주변 환경에 맞춰 몸 색깔을 바꾸고, 두 눈을 따로따로 굴리며 살아가지요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#10b981" stroke-width="4"><ellipse cx="45" cy="50" rx="20" ry="15"/><circle cx="42" cy="45" r="6"/><path d="M62 50 Q75 40 70 65 Q60 55 62 50" stroke-width="3"/></svg>` }
+            ]
+        },
+        "뱀": {
+            title: "🐍 뱀의 한살이 (파충류)",
+            steps: [
+                { name: "말랑한 알", desc: "새 알과 달리 가죽처럼 말랑말랑하고 끈적한 알을 무더기로 낳아요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#1e3a8a" stroke-width="4"><ellipse cx="45" cy="48" rx="10" ry="14"/><ellipse cx="58" cy="54" rx="9" ry="13"/></svg>` },
+                { name: "스스로 자라는 새끼", desc: "알을 깨고 나오자마자 독이나 사냥 능력을 갖추고 있어 혼자서 살아갑니다.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#1e3a8a" stroke-width="4"><path d="M30 60 Q50 40 70 60" stroke-width="3"/></svg>` },
+                { name: "허물 벗는 어른 뱀", desc: "자라면서 몸에 꽉 찬 허물을 머리부터 발끝까지 통째로 미끈하게 벗어던져요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#065f46" stroke-width="4"><path d="M30 35 Q50 15 70 35 Q50 55 30 75 Q50 95 70 85" stroke-width="4"/></svg>` }
+            ]
+        },
+        "금붕어": {
+            title: "🐟 금붕어의 한살이 (어류)",
+            steps: [
+                { name: "풀에 붙은 알", desc: "물풀 줄기에 투명하고 아주 작은 알들을 접착제처럼 붙여놓아요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#ea580c" stroke-width="4"><circle cx="40" cy="45" r="5"/><circle cx="55" cy="50" r="5"/></svg>` },
+                { name: "치어(아기 물고기)", desc: "배에 노란 영양분 주머니(난황)를 달고 태어나며, 처음에는 까만 빛을 띠어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#ea580c" stroke-width="4"><path d="M30 50 L65 46 L75 40 L70 50 L75 60 Z" stroke-width="2"/></svg>` },
+                { name: "예쁜 금붕어", desc: "자라면서 점차 붉고 주황색인 예쁜 비늘 옷을 입고 지느러미를 살랑거려요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#f97316" stroke-width="4"><ellipse cx="40" cy="50" rx="18" ry="14"/><path d="M56 46 L80 30 L70 50 L80 70 L56 54 Z"/><path d="M35 38 Q45 25 40 36"/></svg>` }
+            ]
+        },
+        "연어": {
+            title: "🐟 연어의 한살이 (어류)",
+            steps: [
+                { name: "강바닥의 알", desc: "엄마 연어가 자갈을 파서 붉은색 알을 낳고 자갈로 다시 잘 덮어줘요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#f43f5e" stroke-width="4"><circle cx="45" cy="52" r="6"/><circle cx="58" cy="48" r="6"/></svg>` },
+                { name: "바다로 가는 여정", desc: "강에서 깨어나 넓고 먼 바다로 헤엄쳐 가 몇 년 동안 튼튼하게 자라요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#475569" stroke-width="4"><path d="M25 50 Q50 40 75 50 L85 45 L80 55 Z"/></svg>` },
+                { name: "고향 강으로 복귀", desc: "알을 낳기 위해 자기가 태어난 고향 강으로 거친 물살과 곰을 피해 거슬러 올라와요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#e11d48" stroke-width="4"><path d="M20 55 Q50 30 80 50 L90 40 L85 60 Z M45 40 L55 28 L52 42" stroke-width="3"/></svg>` }
+            ]
+        },
+        "상어": {
+            title: "🦈 상어의 한살이 (어류)",
+            steps: [
+                { name: "인어의 지갑(알)", desc: "일부 상어는 네 모서리에 끈이 달린 독특한 갈색 알주머니를 해초에 묶어놓아요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#334155" stroke-width="4"><rect x="35" y="35" width="30" height="30" rx="2"/><path d="M35 35 Q20 20 30 10 M65 35 Q80 20 70 10"/></svg>` },
+                { name: "새끼 상어", desc: "태어날 때부터 무서운 이빨을 가졌으며 태어나자마자 스스로 헤엄쳐 사냥해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#475569" stroke-width="4"><path d="M25 55 Q50 40 75 50 L80 40 L78 55 Z"/></svg>` },
+                { name: "바다의 포식자", desc: "몸집이 엄청 커지고 날카로운 이빨이 빠지면 뒤에서 새 이빨이 계속 돋아나요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#1e293b" stroke-width="4"><path d="M15 60 Q50 25 85 50 L95 40 L90 60 Z M48 40 L55 15 L58 35" stroke-width="4"/></svg>` }
+            ]
+        },
+        "해마": {
+            title: "🦄 해마의 한살이 (어류)",
+            steps: [
+                { name: "아빠 육아주머니", desc: "엄마가 아빠 배에 있는 주머니에 알을 넣어주면 아빠가 소중히 품어줘요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0d9488" stroke-width="4"><path d="M45 30 Q55 45 45 60 Q35 70 45 80" stroke-width="4"/><ellipse cx="50" cy="55" rx="8" ry="12" stroke-dasharray="2 2"/></svg>` },
+                { name: "아빠 배에서 뿅!", desc: "시간이 흐르면 아빠가 배를 툭툭 치며 수백 마리의 작은 아기 해마들을 밖으로 뿜어내요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0d9488" stroke-width="4"><path d="M45 30 Q55 45 45 60"/><circle cx="62" cy="50" r="2"/><circle cx="68" cy="56" r="2"/></svg>` },
+                { name: "꼭 붙잡는 해마", desc: "머리는 말 모양, 꼬리는 나선형이에요. 해초에 꼬리를 감고 플랑크톤을 먹어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#0f766e" stroke-width="4"><path d="M45 25 Q55 15 50 35 Q58 50 48 65 Q38 75 48 85 Q55 90 48 95" stroke-width="4"/><circle cx="48" cy="25" r="2" fill="#0f766e"/></svg>` }
+            ]
+        },
+
+        // [41-50] 기타 흥미로운 생물 (공룡, 고래, 연체동물 등)
+        "달팽이": {
+            title: "🐌 달팽이의 한살이 (연체동물)",
+            steps: [
+                { name: "하얀 구슬 알", desc: "흙 속에 투명하고 하얀 진주 구슬 같은 알들을 수십 개 낳아요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#b45309" stroke-width="4"><circle cx="45" cy="45" r="6"/><circle cx="55" cy="45" r="6"/><circle cx="50" cy="55" r="6"/></svg>` },
+                { name: "아기 달팽이", desc: "알에서 깨어날 때부터 몸에 아주 작고 투명한 집(패각)을 메고 나와요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#b45309" stroke-width="4"><ellipse cx="45" cy="60" rx="12" ry="8"/><circle cx="52" cy="52" r="8"/></svg>` },
+                { name: "돌돌 버라이어티", desc: "껍데기가 자라면서 점점 단단해지고 소용돌이 줄무늬가 많아져요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#78350f" stroke-width="4"><ellipse cx="40" cy="65" rx="22" ry="12"/><circle cx="52" cy="50" r="16"/><path d="M52 50 Q52 42 46 46 Q44 54 52 54" stroke-width="2"/><path d="M24 60 L14 45 M28 58 L22 42"/></svg>` }
+            ]
+        },
+        "문어": {
+            title: "🐙 문어의 한살이 (연체동물)",
+            steps: [
+                { name: "포도송이 알", desc: "바위 동굴 천장에 하얀 포도송이 같은 알을 주렁주렁 매달아놓고 엄마가 지켜요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#be123c" stroke-width="4"><circle cx="50" cy="35" r="5"/><circle cx="44" cy="45" r="5"/><circle cx="56" cy="45" r="5"/><path d="M50 20 L50 30"/></svg>` },
+                { name: "둥둥 떠다니는 새끼", desc: "알에서 깨어나면 아주 투명한 몸으로 물 위를 둥둥 떠다니며 자라나요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#be123c" stroke-width="4"><circle cx="50" cy="45" r="12"/><path d="M44 57 L40 68 M50 57 L50 70 M56 57 L60 68"/></svg>` },
+                { name: "바다의 은둔자", desc: "다리 8개에 빨판이 생겨요. 게를 좋아하고 위험하면 먹물을 '슉' 뿜어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#9f1239" stroke-width="4"><circle cx="50" cy="40" r="18"/><path d="M40 56 Q30 75 20 65 M46 58 Q50 80 50 65 M54 58 Q70 75 80 65 M36 50 Q15 50 25 60" stroke-width="3"/></svg>` }
+            ]
+        },
+        "고래": {
+            title: "🐋 고래(대형 포위류)의 한살이",
+            steps: [
+                { name: "물속에서 탄생", desc: "알이 아니라 물속에서 새끼를 낳아요. 엄마 고래가 숨을 쉬게 수면으로 밀어줘요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#1e3a8a" stroke-width="4"><path d="M20 60 Q45 40 70 55"/></svg>` },
+                { name: "헤비급 우유 흡입", desc: "엄마 고래 젖을 먹고 자라는데, 우유가 엄청 진해서 하루 만에 몸무게가 쑥쑥 늘어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#1e3a8a" stroke-width="4"><path d="M15 55 Q45 30 75 45 L85 40 L80 52 Z" stroke-width="3"/></svg>` },
+                { name: "지구에서 가장 큰 동물", desc: "다 자라면 커다란 숨구멍으로 물을 위로 멋지게 뿜어내며 전 세계 바다를 여행해요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#172554" stroke-width="4"><path d="M10 65 Q50 20 85 50 L95 42 L90 60 Z" stroke-width="5"/><path d="M48 34 Q48 15 40 20 M50 34 Q53 15 60 20" stroke-width="2"/></svg>` }
+            ]
+        },
+        "티라노사우르스": {
+            title: "🦖 티라노사우르스의 한살이 (공룡)",
+            steps: [
+                { name: "둥지 속 거대한 알", desc: "흙으로 만든 안전한 둥지에 럭비공처럼 타원형의 큰 알을 여러 개 낳았어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#15803d" stroke-width="4"><ellipse cx="50" cy="50" rx="16" ry="24"/></svg>` },
+                { name: "깃털 달린 새끼", desc: "어릴 때는 체온을 유지하기 위해 몸에 보송보송한 깃털이 나 있었을 거래요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#15803d" stroke-width="4"><circle cx="45" cy="50" r="12"/><path d="M45 38 L38 30 M52 42 L60 35" stroke-width="2"/></svg>` },
+                { name: "백악기 육식 왕", desc: "자라면서 깃털이 빠지고 거대한 턱과 이빨을 가진 무시무시한 왕 공룡이 돼요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#166534" stroke-width="4"><rect x="30" y="40" width="35" height="25" rx="8"/><path d="M65 45 L80 48 L65 55"/><path d="M40 65 L35 85 M55 65 L60 85" stroke-width="4"/></svg>` }
+            ]
+        },
+        "트리케라톱스": {
+            title: "🦕 트리케라톱스의 한살이 (공룡)",
+            steps: [
+                { name: "단단한 공룡알", desc: "둥글고 커다란 알 속에서 머리에 뿔이 날 아기 공룡이 무럭무럭 자라요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#b45309" stroke-width="4"><circle cx="50" cy="50" r="20"/></svg>` },
+                { name: "귀여운 아기 공룡", desc: "태어났을 때는 코 위에 아주 작은 돌기 모양의 뿔만 작게 가지고 있어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#b45309" stroke-width="4"><circle cx="45" cy="55" r="14"/><path d="M57 48 L61 46"/></svg>` },
+                { name: "세 개의 뿔 어른 공룡", desc: "머리에 커다란 방패(프릴)가 생기고 코와 이마에 강력한 뿔 3개가 우뚝 솟아나요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#78350f" stroke-width="4"><circle cx="45" cy="55" r="18"/><path d="M38 40 Q45 20 60 40 L50 55" fill="none"/><path d="M58 46 L72 38 M55 56 L70 56 M42 42 L48 26" stroke-width="3"/></svg>` }
+            ]
+        },
+        "기린": {
+            title: "🦒 기린의 한살이",
+            steps: [
+                { name: "쿵! 하고 태어난 새끼", desc: "엄마 기린이 서서 새끼를 낳기 때문에, 태어나자마자 높은 곳에서 바닥으로 쿵 떨어져요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#d97706" stroke-width="4"><circle cx="45" cy="65" r="10"/></svg>` },
+                { name: "금방 일어서는 아기", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#d97706" stroke-width="4"><circle cx="45" cy="60" r="12"/><path d="M45 48 L45 35 M38 72 L35 85 M52 72 L55 85"/></svg>`, desc: "태어난 지 1시간 만에 다리에 힘을 주고 벌떡 일어서서 걸어 다녀요." },
+                { name: "목이 가장 긴 기린", desc: "목이 아파트 2층 높이만큼 길어져요. 높은 나무 꼭대기 잎을 혀로 쏙쏙 뜯어 먹어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#b45309" stroke-width="4"><ellipse cx="40" cy="70" rx="18" ry="14"/><path d="M48 60 L58 20"/><circle cx="58" cy="15" r="5"/><path d="M32 82 L30 98 M44 82 L46 98" stroke-width="3"/></svg>` }
+            ]
+        },
+        "캥거루": {
+            title: "🦘 캥거루의 한살이",
+            steps: [
+                { name: "아주 작은 아기", desc: "꿀벌만큼 조그맣고 빨갛게 태어나서 혼자 힘으로 엄마 배의 주머니까지 기어 올라가요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#c2410c" stroke-width="4"><circle cx="50" cy="55" r="6"/></svg>` },
+                { name: "주머니 속 요기", desc: "엄마 아기주머니(육아낭) 속에 쏙 들어가 따뜻하게 젖을 먹으며 안전하게 자라요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#c2410c" stroke-width="4"><ellipse cx="50" cy="60" rx="20" ry="15"/><circle cx="50" cy="54" r="6"/></svg>` },
+                { name: "점프왕 캥거루", desc: "주머니 밖으로 나와 길고 튼튼한 뒷다리와 꼬리로 껑충껑충 넓은 땅을 뛰어다녀요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#9a3412" stroke-width="4"><ellipse cx="42" cy="60" rx="22" ry="16"/><path d="M54 50 L64 30"/><circle cx="64" cy="24" r="6"/><path d="M22 68 Q10 75 5 70" stroke-width="3"/></svg>` }
+            ]
+        },
+        "악어거북": {
+            title: "🐢 악어거북의 한살이",
+            steps: [
+                { name: "강가 모래 속 알", desc: "강바닥 근처 모래 언덕에 구멍을 파고 하얗고 단단한 알들을 낳아요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#451a03" stroke-width="4"><circle cx="50" cy="50" r="12"/></svg>` },
+                { name: "낚시하는 아기거미", desc: "입속에 빨간 벌레 모양 돌기가 있어요. 입을 벌려 물고기를 속여 잡아요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#451a03" stroke-width="4"><ellipse cx="45" cy="55" rx="14" ry="10"/><path d="M56 50 L66 46 L58 56"/></svg>` },
+                { name: "공룡 같은 거북", desc: "등껍질에 뾰족뾰족한 가시 산맥이 생기고 턱 힘이 사자만큼 강력해져요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#311502" stroke-width="4"><ellipse cx="45" cy="55" rx="22" ry="16"/><path d="M30 40 L35 32 M45 40 L45 30 M55 42 L60 34" stroke-width="3"/><path d="M62 50 L75 45 L62 60" stroke-width="3"/></svg>` }
+            ]
+        },
+        "카피바라": {
+            title: "🐹 카피바라의 한살이",
+            steps: [
+                { name: "풀숲의 새끼", desc: "물가 풀숲에서 태어나요. 태어나자마자 온몸에 털이 나 있고 이빨도 있어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#7c2d12" stroke-width="4"><ellipse cx="50" cy="55" rx="15" ry="11"/></svg>` },
+                { name: "수영 배우는 아이", desc: "부모를 따라 물에 들어가 발가락 사이 물갈퀴로 개헤엄을 배워요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#7c2d12" stroke-width="4"><ellipse cx="48" cy="55" rx="18" ry="13"/><path d="M25 60 L15 65"/></svg>` },
+                { name: "친절한 거대 쥐", desc: "쥐 중에서 몸집이 가장 커요. 성격이 온순해서 모든 동물과 친하게 지내요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#431407" stroke-width="4"><ellipse cx="45" cy="55" rx="25" ry="18"/><rect x="62" y="42" width="14" height="14" rx="3"/><circle cx="68" cy="46" r="1.5" fill="#431407"/></svg>` }
+            ]
+        },
+        "수달": {
+            title: "🦦 수달의 한살이",
+            steps: [
+                { name: "물가 굴속 새끼", desc: "물 근처 안전한 바위 틈이나 굴속에서 눈을 감은 채 솜털을 입고 태어나요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#7c2d12" stroke-width="4"><circle cx="50" cy="55" r="15"/></svg>` },
+                { name: "생존 수영 연습", desc: "물이 무서운 아기 수달을 엄마 수달이 달래며 물속으로 밀어 넣어 수영을 가르쳐요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#7c2d12" stroke-width="4"><ellipse cx="45" cy="55" rx="18" ry="10"/></svg>` },
+                { name: "조개 깨기 달인", desc: "물속을 미끈하게 헤엄치며 물고기를 잡고, 돌을 이용해 단단한 조개를 깨 먹어요.", svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#431407" stroke-width="4"><path d="M20 50 Q50 35 80 45 L90 52" stroke-width="4"/><circle cx="48" cy="48" r="8"/></svg>` }
+            ]
+        }
+    };
+
+    // 검색 기능
+    function searchAnimal() {
+        const input = document.getElementById("animalInput").value.trim();
+        const resultContainer = document.getElementById("resultContainer");
+        const errorMessage = document.getElementById("errorMessage");
+        const animalTitle = document.getElementById("animalTitle");
+        const timeline = document.getElementById("timeline");
+
+        // 초기화
+        resultContainer.style.display = "none";
+        errorMessage.style.display = "none";
+        timeline.innerHTML = "";
+
+        if (animalData[input]) {
+            // 데이터가 있을 때 화면에 표시
+            const data = animalData[input];
+            animalTitle.innerText = data.title;
+
+            data.steps.forEach((step, index) => {
+                const stepHtml = `
+                    <div class="step">
+                        <div class="step-num">${index + 1}</div>
+                        <div class="icon-box">${step.svg}</div>
+                        <div class="step-name">${step.name}</div>
+                        <div class="step-desc">${step.desc}</div>
+                    </div>
+                `;
+                timeline.innerHTML += stepHtml;
+            });
+
+            resultContainer.style.style = "block";
+            resultContainer.style.display = "block";
+        } else if (input !== "") {
+            // 데이터가 없을 때 에러 메시지
+            errorMessage.style.display = "block";
+        }
+    }
+
+    // 엔터키 입력 처리
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            searchAnimal();
+        }
+    }
+</script>
+
+</body>
+</html>
